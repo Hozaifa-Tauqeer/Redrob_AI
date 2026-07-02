@@ -1,40 +1,44 @@
-Python 3.10.7 (tags/v3.10.7:6cc6b13, Sep  5 2022, 14:08:36) [MSC v.1933 64 bit (AMD64)] on win32
-Type "help", "copyright", "credits" or "license()" for more information.
->>> !pip install sentence-transformers
-... import json
-... import csv
-... import torch
-... from datetime import datetime
-... from sentence_transformers import SentenceTransformer, util
-... from google.colab import files
-... 
-... print("Please upload your JSONL file:")
-... uploaded = files.upload()
-... DATA_PATH = next(iter(uploaded))
-... CSV_OUTPUT_NAME = 'team_final_submission.csv'
-... 
-... # Reference date based on the dataset timeline
-... REFERENCE_DATE = datetime(2026, 6, 19)
-... 
-... # ==========================================
-... # SETUP: LOAD THE AI MODEL
-... # ==========================================
-... print("Loading AI Embedding Model...")
-... model = SentenceTransformer('all-MiniLM-L6-v2')
-... 
-... IDEAL_PROFILE_TEXT = """
-... Senior AI Engineer ML systems embeddings retrieval ranking LLMs fine-tuning product-engineering scalable backend.
-... Built recommendation systems, deployed language models, strong technical depth combined with scrappy product focus.
-... """
-... ideal_embedding = model.encode(IDEAL_PROFILE_TEXT, convert_to_tensor=True)
-... 
-... # ==========================================
-... # PHASE 1: THE HONEYPOT CATCHER
-... # ==========================================
-... def is_honeypot(candidate):
-...     yoe = candidate.get('profile', {}).get('years_of_experience', 0)
-...     if yoe is None: yoe = 0
-...     career_history = candidate.get('career_history', [])
+import json
+import csv
+import argparse
+import torch
+from datetime import datetime
+from sentence_transformers import SentenceTransformer, util
+
+# ==========================================
+# SETUP: PARSE ARGUMENTS & CONFIG
+# ==========================================
+# This allows the script to accept --candidates and --out from your terminal command
+parser = argparse.ArgumentParser(description="Candidate Ranking Script")
+parser.add_argument('--candidates', required=True, help="Path to the candidates.jsonl file")
+parser.add_argument('--out', required=True, help="Path to output the submission.csv file")
+args = parser.parse_args()
+
+DATA_PATH = args.candidates
+CSV_OUTPUT_NAME = args.out
+
+# Reference date based on the dataset timeline
+REFERENCE_DATE = datetime(2026, 6, 19)
+
+# ==========================================
+# SETUP: LOAD THE AI MODEL
+# ==========================================
+print("Loading AI Embedding Model...")
+model = SentenceTransformer('all-MiniLM-L6-v2')
+
+IDEAL_PROFILE_TEXT = """
+Senior AI Engineer ML systems embeddings retrieval ranking LLMs fine-tuning product-engineering scalable backend.
+Built recommendation systems, deployed language models, strong technical depth combined with scrappy product focus.
+"""
+ideal_embedding = model.encode(IDEAL_PROFILE_TEXT, convert_to_tensor=True)
+
+# ==========================================
+# PHASE 1: THE HONEYPOT CATCHER
+# ==========================================
+def is_honeypot(candidate):
+    yoe = candidate.get('profile', {}).get('years_of_experience', 0)
+    if yoe is None: yoe = 0
+    career_history = candidate.get('career_history', [])
     skills = candidate.get('skills', [])
 
     for role in career_history:
@@ -81,10 +85,6 @@ def calculate_behavioral_multiplier(candidate):
         multiplier *= 0.5
     else:
         multiplier *= (0.5 + (response_rate * 0.5))
-
-    interview_rate = signals.get('interview_completion_rate', 1.0)
-    if interview_rate < 0.50:
-        multiplier *= 0.7
 
     # 4. The Builder Boost (Adjusted for actual distribution)
     github = signals.get('github_activity_score', -1)
@@ -174,4 +174,3 @@ with open(CSV_OUTPUT_NAME, 'w', newline='', encoding='utf-8') as f:
         writer.writerow([cid, rank, score, reasoning])
 
 print("Done! Master pipeline execution complete.")
-
