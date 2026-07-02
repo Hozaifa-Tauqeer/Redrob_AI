@@ -49,7 +49,7 @@ To meet the Hackathon requirement for a ≤100 candidate sandbox, we have provid
 
 This notebook dynamically clones this GitHub repository (https://github.com/Hozaifa-Tauqeer/Redrob_AI), installs dependencies, reads a sample of the dataset, and runs the ranking pipeline end-to-end to instantly download the results CSV.
 
-👉 Open our Colab Sandbox
+👉 [Open our Colab Sandbox](https://colab.research.google.com/drive/1SRj2Z-JAq2MOz3lHDnKjFymLTSyYoVKj?usp=sharing)
 
 📂 Repository Structure
 
